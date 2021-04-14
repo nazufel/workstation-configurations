@@ -3,6 +3,15 @@
 # hold default vars
 
 ---
+
+install_list:
+  - "brave-browser"
+  - "code"
+  - "containerd.io"
+  - "docker-ce" 
+  - "docker-ce-cli"
+  - "google-chrome"
+
 yum_repo_list:
   - yum_repo_name: "brave-browser"
     yum_repo_baseurl: "https://brave-browser-rpm-release.s3.brave.com/{{ ansible_facts.architecture  }}/"

@@ -4,10 +4,6 @@
 
   tasks:
 
-    - name: debug ansible facts
-      debug: 
-        msg: "{{ ansible_facts.distribution | lower }}"
-
     - name: "include vars files"
       ansible.builtin.include_vars:
         file: vars.yml
@@ -25,11 +21,5 @@
 
     - name: "install dnf packages"
       ansible.builtin.dnf:
-        name:
-          - "brave-browser"
-          - "code"
-          - "containerd.io"
-          - "docker-ce" 
-          - "docker-ce-cli"
-          - "google-chrome"
+        name: "{{ install_list }}"
         state: "latest"

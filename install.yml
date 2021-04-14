@@ -2,18 +2,57 @@
   hosts: localhost
   become: true
   tasks:
+
+    - name: debug ansible facts
+      debug: 
+        msg: "{{ ansible_facts.distribution | lower }}"
+
     - name: "add vscode repo"
       ansible.builtin.yum_repository:
         name: "code"
         baseurl: "https://packages.microsoft.com/yumrepos/vscode"
-        description: "Visual Studio Code repo"
+        description: "Visual Studio Code"
         enabled: true
         file: "vscode"
         gpgcheck: true
         gpgkey: "https://packages.microsoft.com/keys/microsoft.asc"
 
-    - name: "install vscode"
+    - name: "add google-chrome repo"
+      ansible.builtin.yum_repository:
+        name: "google-chrome"
+        baseurl: "http://dl.google.com/linux/chrome/rpm/stable/{{ ansible_facts.architecture }}"
+        description: "Google Chrome"
+        enabled: true
+        file: "google-chrome"
+        gpgcheck: true
+        gpgkey: "https://dl.google.com/linux/linux_signing_key.pub"
+
+    - name: "add brave repo"
+      ansible.builtin.yum_repository:
+        name: "brave-browser"
+        baseurl: "https://brave-browser-rpm-release.s3.brave.com/{{ ansible_facts.architecture  }}/"
+        description: "Brave Browser"
+        enabled: true
+        file: "brave-browser"
+        gpgcheck: true
+        gpgkey: "https://brave-browser-rpm-release.s3.brave.com/brave-core.asc"
+
+    - name: "add docker repo"
+      ansible.builtin.yum_repository:
+        name: "docker-ce-stable"
+        baseurl: "https://download.docker.com/linux/{{ ansible_facts.distribution | lower }}/{{ ansible_facts.distribution_major_version }}/{{ ansible_facts.architecture }}/stable"
+        description: "Docker CE Stable"
+        enabled: true
+        gpgcheck: true
+        gpgkey: "https://download.docker.com/linux/{{ ansible_facts.distribution | lower }}/gpg"
+
+    - name: "install dnf packages"
       ansible.builtin.dnf:
         name:
+          - "brave-browser"
           - "code"
+          - "containerd.io"
+          - "docker-ce" 
+          - "docker-ce-cli"
+          - "google-chrome"
         state: "latest"

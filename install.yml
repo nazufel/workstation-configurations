@@ -6,8 +6,9 @@
       ansible.builtin.yum_repository:
         name: "code"
         baseurl: "https://packages.microsoft.com/yumrepos/vscode"
-        description: "Visual Studio Code"
+        description: "Visual Studio Code repo"
         enabled: true
+        file: "vscode"
         gpgcheck: true
         gpgkey: "https://packages.microsoft.com/keys/microsoft.asc"
 

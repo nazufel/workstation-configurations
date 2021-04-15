@@ -23,3 +23,33 @@
       ansible.builtin.dnf:
         name: "{{ install_list }}"
         state: "latest"
+    
+    - name: "enable and start services"
+      ansible.builtin.systemd:
+        name: "docker"
+        state: started
+        enabled: true
+
+    - name: "configure users"
+      ansible.builtin.user:
+        name: "rross"
+        generate_ssh_key: true
+        groups: "docker,wheel"
+        shell: "/bin/fish"
+        ssh_key_bits: 2048
+        ssh_key_file: ".ssh/id_rsa"
+      tags:
+        - users
+
+    - name: "template shell configs"
+      ansible.builtin.template:
+        src: "config.fish.j2"
+        dest: "/home/{{ lookup('env', 'USER') }}/.config/fish/config.fish"
+        owner: "{{ lookup('env', 'USER') }}"
+        group: "{{ lookup('env', 'USER') }}"
+        mode: 0644
+      tags:
+        - shell
+        - fish
+...
+#EOF

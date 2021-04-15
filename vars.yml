@@ -10,6 +10,7 @@ install_list:
   - "containerd.io"
   - "docker-ce" 
   - "docker-ce-cli"
+  - "fish"
   - "google-chrome"
 
 yum_repo_list:
@@ -34,7 +35,7 @@ yum_repo_list:
     yum_repo_file: "docker-ce-stable"
     yum_repo_gpgcheck: true
     yum_repo_gpgkey: "https://download.docker.com/linux/{{ ansible_facts.distribution | lower }}/gpg"
-  - yum_repo_name: "google-chrome"
+  - yum_repo_name: "google-chrome-stable"
     yum_repo_baseurl: "http://dl.google.com/linux/chrome/rpm/stable/{{ ansible_facts.architecture }}"
     yum_repo_description: "Google Chrome"
     yum_repo_enabled: true

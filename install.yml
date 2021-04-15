@@ -6,11 +6,7 @@
     - name: "include vars files"
       ansible.builtin.include_vars:
         file: vars.yml
-      tags:
-        - "dnf"
-        - "flatpak"
-        - "install"
-        - "pip"
+      tags: "always"
 
     - name: "add yum repos"
       ansible.builtin.yum_repository:
@@ -23,6 +19,7 @@
         gpgkey: "{{ item.yum_repo_gpgkey }}"
       loop: "{{ yum_repo_list }}"
       become: true
+      tags: "dnf"
 
     - name: "install dnf packages"
       ansible.builtin.dnf:
@@ -92,18 +89,17 @@
         group: "{{ lookup('env', 'USER') }}"
         mode: 0644
       tags:
-        - shell
-        - fish
+        - "shell"
+        - "fish"
 
     - name: "check for oh-my-fish installer"
       ansible.builtin.stat:
         path: "/home/{{ lookup('env', 'USER') }}/omf-install"
       register: omf_installed
+      tags: 
+        - "fish"
+        - "shell"
 
-    - name: "debug"
-      ansible.builtin.debug:
-        msg: "{{ omf_installed }}"
-    
     - name: "block for installing omf"
       block:
 

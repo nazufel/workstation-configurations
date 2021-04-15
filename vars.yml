@@ -12,6 +12,8 @@ dnf_install_list:
   - "docker-ce-cli"
   - "fish"
   - "google-chrome"
+  - "google-cloud-sdk"
+  - "kubectl"
   - "terraform-0.14.6"
 
 flatpak_packages:
@@ -20,9 +22,10 @@ flatpak_packages:
 pip_packages: 
   - "ansible==2.9.13"
 
+# TODO: variablize OS and Arch specifics
 yum_repo_list:
   - yum_repo_name: "brave-browser"
-    yum_repo_baseurl: "https://brave-browser-rpm-release.s3.brave.com/{{ ansible_facts.architecture  }}/"
+    yum_repo_baseurl: "https://brave-browser-rpm-release.s3.brave.com/x86_64/"
     yum_repo_description: "Brave Browser"
     yum_repo_enabled: true
     yum_repo_file: "brave-browser"
@@ -36,25 +39,39 @@ yum_repo_list:
     yum_repo_gpgcheck: true
     yum_repo_gpgkey: "https://packages.microsoft.com/keys/microsoft.asc"
   - yum_repo_name: "docker-ce-stable"
-    yum_repo_baseurl: "https://download.docker.com/linux/{{ ansible_facts.distribution | lower }}/{{ ansible_facts.distribution_major_version }}/{{ ansible_facts.architecture }}/stable"
+    yum_repo_baseurl: "https://download.docker.com/linux/fedora/34/x86_64/stable"
     yum_repo_description: "Docker CE Stable"
     yum_repo_enabled: true
     yum_repo_file: "docker-ce-stable"
     yum_repo_gpgcheck: true
-    yum_repo_gpgkey: "https://download.docker.com/linux/{{ ansible_facts.distribution | lower }}/gpg"
+    yum_repo_gpgkey: "https://download.docker.com/linux/fedora/gpg"
   - yum_repo_name: "google-chrome-stable"
-    yum_repo_baseurl: "http://dl.google.com/linux/chrome/rpm/stable/{{ ansible_facts.architecture }}"
+    yum_repo_baseurl: "http://dl.google.com/linux/chrome/rpm/stable/x86_64"
     yum_repo_description: "Google Chrome"
     yum_repo_enabled: true
-    yum_repo_file: "google-chrome"
+    yum_repo_file: "google-chrome-stable"
     yum_repo_gpgcheck: true
     yum_repo_gpgkey: "https://dl.google.com/linux/linux_signing_key.pub"
+  - yum_repo_name: "google-cloud-sdk"
+    yum_repo_baseurl: "https://packages.cloud.google.com/yum/repos/cloud-sdk-el7-x86_64"
+    yum_repo_description: "Google Cloud SDK"
+    yum_repo_enabled: true
+    yum_repo_file: "google-cloud-sdk"
+    yum_repo_gpgcheck: true
+    yum_repo_gpgkey: "https://packages.cloud.google.com/yum/doc/yum-key.gpg https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg"
   - yum_repo_name: "hashicorp"
-    yum_repo_baseurl: "https://rpm.releases.hashicorp.com/{{ ansible_facts.distribution | lower }}/{{ ansible_facts.distribution_major_version }}/{{ ansible_facts.architecture }}/stable"
-    yum_repo_description: "Hashicorp Stable - {{ ansible_facts.architecture }}"
+    yum_repo_baseurl: "https://rpm.releases.hashicorp.com/fedora/34/x86_64/stable"
+    yum_repo_description: "Hashicorp Stable - x86_64"
     yum_repo_enabled: true
     yum_repo_file: "hashicorp"
     yum_repo_gpgcheck: true
     yum_repo_gpgkey: "https://rpm.releases.hashicorp.com/gpg"
+  - yum_repo_name: "kubernetes"
+    yum_repo_baseurl: "https://packages.cloud.google.com/yum/repos/kubernetes-el7-x86_64"
+    yum_repo_description: "kubernetes"
+    yum_repo_enabled: true
+    yum_repo_file: "kubernetes"
+    yum_repo_gpgcheck: true
+    yum_repo_gpgkey: "https://packages.cloud.google.com/yum/doc/yum-key.gpg https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg"
 ...
 #EOF

@@ -21,7 +21,7 @@
 
     - name: "install dnf packages"
       ansible.builtin.dnf:
-        name: "{{ install_list }}"
+        name: "{{ dnf_install_list }}"
         state: "latest"
     
     - name: "enable and start services"
@@ -30,6 +30,10 @@
         state: started
         enabled: true
 
+
+    ##################################
+    ### create and configure users ###
+    ##################################
     - name: "configure users"
       ansible.builtin.user:
         name: "rross"
@@ -51,5 +55,36 @@
       tags:
         - shell
         - fish
+
+    - name: "create omf directories"
+      ansible.builtin.file:
+        path: "/home/{{ lookup('env', 'USER') }}/{{ item }}/"
+        state: "directory"
+        owner: "{{ lookup('env', 'USER') }}"
+        group: "{{ lookup('env', 'USER') }}"
+        mode: 0644
+      loop:
+        - ".local/share/omf"
+        - ".config/omf"
+      tags:
+        - fish
+        - omf
+
+    - name: "get oh-my-fish installer"
+      ansible.builtin.get_url:
+        url: "https://get.oh-my.fish"
+        dest: "/home/{{ lookup('env', 'USER') }}/.local/share/omf/omf"
+        checksum: sha256:bb1f4025934600ea6feef2ec11660e17e2b6449c5a23c033860aed712ad328c9
+      tags:
+        - fish
+        - omf
+
+    - name: "isntall oh-my-fish"
+      ansible.builtin.command: "fish install --path=/home/{{ lookup('env', 'USER') }}/.local/share/omf --config=/home/{{ lookup('env', 'USER') }}/.config/omf"
+      args:
+        chdir: "/home/{{ lookup('env', 'USER') }}/.local/share/omf"
+      tags:
+        - fish
+        - omf
 ...
 #EOF

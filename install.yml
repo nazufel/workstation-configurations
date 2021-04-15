@@ -1,12 +1,15 @@
 - name: install
   hosts: localhost
-  become: true
 
   tasks:
 
     - name: "include vars files"
       ansible.builtin.include_vars:
         file: vars.yml
+      tags:
+        - "dnf"
+        - "install"
+        - "pip"
 
     - name: "add yum repos"
       ansible.builtin.yum_repository:
@@ -18,17 +21,34 @@
         gpgcheck: "{{ item.yum_repo_gpgcheck }}"
         gpgkey: "{{ item.yum_repo_gpgkey }}"
       loop: "{{ yum_repo_list }}"
+      become: true
 
     - name: "install dnf packages"
       ansible.builtin.dnf:
         name: "{{ dnf_install_list }}"
         state: "latest"
+      become: true
+      tags:
+        - "dnf"
+        - "install"
+
+    - name: "install pip packages"
+      ansible.builtin.pip:
+        name: "{{ item }}"
+        state: "forcereinstall"
+      loop: "{{ pip_packages }}"
+      tags:
+        - "install"
+        - "pip"
+
+
     
     - name: "enable and start services"
       ansible.builtin.systemd:
         name: "docker"
         state: started
         enabled: true
+      become: true
 
 
     ##################################
@@ -42,6 +62,7 @@
         shell: "/bin/fish"
         ssh_key_bits: 2048
         ssh_key_file: ".ssh/id_rsa"
+      become: true
       tags:
         - users
 

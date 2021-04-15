@@ -14,7 +14,8 @@ dnf_install_list:
   - "google-chrome"
   - "terraform-0.14.6"
 
-fish_theme: "agnoster"
+pip_packages: 
+  - "ansible==2.9.13"
 
 yum_repo_list:
   - yum_repo_name: "brave-browser"

@@ -8,6 +8,7 @@
         file: vars.yml
       tags:
         - "dnf"
+        - "flatpak"
         - "install"
         - "pip"
 
@@ -32,6 +33,26 @@
         - "dnf"
         - "install"
 
+    - name: "add flathub remote"
+      community.general.flatpak_remote:
+        name: "flathub"
+        state: "present"
+        flatpakrepo_url: "https://dl.flathub.org/repo/flathub.flatpakrepo"
+      become: true
+      tags:
+        - "flatpak"
+        - "install"
+
+    - name: "install flatpak packages"
+      community.general.flatpak:
+        name: "{{ item }}"
+        state: "present"
+        remote: "flathub"
+      loop: "{{ flatpak_packages }}"
+      tags:
+        - "flatpak"
+        - "install"
+
     - name: "install pip packages"
       ansible.builtin.pip:
         name: "{{ item }}"
@@ -40,8 +61,6 @@
       tags:
         - "install"
         - "pip"
-
-
     
     - name: "enable and start services"
       ansible.builtin.systemd:
@@ -49,7 +68,6 @@
         state: started
         enabled: true
       become: true
-
 
     ##################################
     ### create and configure users ###
@@ -103,7 +121,8 @@
 
         # TODO: check if omf is installed because this will hang
         - name: "install oh-my-fish package manager"
-          ansible.builtin.command: "fish omf-install"
+          ansible.builtin.command: 
+            cmd: "fish omf-install"
           args:
             chdir: "/home/{{ lookup('env', 'USER') }}"
           tags:

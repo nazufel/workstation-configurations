@@ -14,6 +14,9 @@ dnf_install_list:
   - "google-chrome"
   - "terraform-0.14.6"
 
+flatpak_packages:
+  - "com.slack.Slack"
+
 pip_packages: 
   - "ansible==2.9.13"
 

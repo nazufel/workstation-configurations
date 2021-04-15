@@ -56,35 +56,48 @@
         - shell
         - fish
 
-    - name: "create omf directories"
-      ansible.builtin.file:
-        path: "/home/{{ lookup('env', 'USER') }}/{{ item }}/"
-        state: "directory"
-        owner: "{{ lookup('env', 'USER') }}"
-        group: "{{ lookup('env', 'USER') }}"
-        mode: 0644
-      loop:
-        - ".local/share/omf"
-        - ".config/omf"
-      tags:
-        - fish
-        - omf
+    - name: "check for oh-my-fish installer"
+      ansible.builtin.stat:
+        path: "/home/{{ lookup('env', 'USER') }}/omf-install"
+      register: omf_installed
 
-    - name: "get oh-my-fish installer"
-      ansible.builtin.get_url:
-        url: "https://get.oh-my.fish"
-        dest: "/home/{{ lookup('env', 'USER') }}/.local/share/omf/omf"
-        checksum: sha256:bb1f4025934600ea6feef2ec11660e17e2b6449c5a23c033860aed712ad328c9
-      tags:
-        - fish
-        - omf
+    - name: "debug"
+      ansible.builtin.debug:
+        msg: "{{ omf_installed }}"
+    
+    - name: "block for installing omf"
+      block:
 
-    - name: "isntall oh-my-fish"
-      ansible.builtin.command: "fish install --path=/home/{{ lookup('env', 'USER') }}/.local/share/omf --config=/home/{{ lookup('env', 'USER') }}/.config/omf"
-      args:
-        chdir: "/home/{{ lookup('env', 'USER') }}/.local/share/omf"
-      tags:
-        - fish
-        - omf
+        - name: "get oh-my-fish installer"
+          ansible.builtin.get_url:
+            checksum: "sha256:bb1f4025934600ea6feef2ec11660e17e2b6449c5a23c033860aed712ad328c9"
+            dest: "/home/{{ lookup('env', 'USER') }}/omf-install"
+            group: "{{ lookup('env', 'USER') }}"
+            mode: 0700
+            owner: "{{ lookup('env', 'USER') }}"
+            url: "https://get.oh-my.fish"
+          tags:
+            - fish
+            - omf
+
+        # TODO: check if omf is installed because this will hang
+        - name: "install oh-my-fish package manager"
+          ansible.builtin.command: "fish omf-install"
+          args:
+            chdir: "/home/{{ lookup('env', 'USER') }}"
+          tags:
+            - fish
+            - omf
+
+        - name: "remove oh-my-fish installer"
+          ansible.builtin.file:
+            path: "/home/{{ lookup('env', 'USER') }}/omf-install"
+            state: "absent"
+          tags:
+            - fish
+            - omf
+
+      when: not omf_installed.stat.exists
+
 ...
 #EOF

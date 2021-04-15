@@ -12,6 +12,9 @@ dnf_install_list:
   - "docker-ce-cli"
   - "fish"
   - "google-chrome"
+  - "terraform-0.14.6"
+
+fish_theme: "agnoster"
 
 yum_repo_list:
   - yum_repo_name: "brave-browser"
@@ -42,5 +45,12 @@ yum_repo_list:
     yum_repo_file: "google-chrome"
     yum_repo_gpgcheck: true
     yum_repo_gpgkey: "https://dl.google.com/linux/linux_signing_key.pub"
+  - yum_repo_name: "hashicorp"
+    yum_repo_baseurl: "https://rpm.releases.hashicorp.com/{{ ansible_facts.distribution | lower }}/{{ ansible_facts.distribution_major_version }}/{{ ansible_facts.architecture }}/stable"
+    yum_repo_description: "Hashicorp Stable - {{ ansible_facts.architecture }}"
+    yum_repo_enabled: true
+    yum_repo_file: "hashicorp"
+    yum_repo_gpgcheck: true
+    yum_repo_gpgkey: "https://rpm.releases.hashicorp.com/gpg"
 ...
 #EOF

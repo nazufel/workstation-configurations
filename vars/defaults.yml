@@ -23,6 +23,8 @@ dnf_update_exclude_packages: "terraform-0.14.6"
 flatpak_packages:
   - "com.slack.Slack"
 
+kubectx_kubens_release: 0.9.3
+
 pip_packages: 
   - "ansible==2.9.13"
 

@@ -91,7 +91,46 @@
       tags:
         - "install"
         - "pip"
-    
+
+    - name: "get kubectx and kubens release v{{ kubectx_kubens_release }} binaries"
+      ansible.builtin.get_url:
+        url: "https://github.com/ahmetb/kubectx/releases/download/v{{ kubectx_kubens_release }}/{{ item }}_v{{ kubectx_kubens_release }}_linux_x86_64.tar.gz"
+        dest: "/home/{{ lookup('env', 'USER') }}/Downloads/{{ item }}.tar.gz"
+      loop:
+        - "kubectx"
+        - "kubens"
+      tags:
+        - "install"
+        - "kubernetes"
+      register: kubectx_kubens_install
+
+    - name: "unarchive kubectx and kubens"
+      ansible.builtin.unarchive:
+        dest: "/usr/local/bin"
+        owner: "root"
+        group: "root"
+        mode: 0777
+        src: "/home/{{ lookup('env', 'USER') }}/Downloads/{{ item }}.tar.gz"
+      become: true
+      loop:
+        - "kubectx"
+        - "kubens"
+      tags:
+        - "kubernetes"
+      when: kubectx_kubens_install.changed
+
+    - name: "clean up kubectx and kubens tarballs from Downloads"
+      ansible.builtin.file:
+        path: "/home/{{ lookup('env', 'USER') }}/Downloads/{{ item }}.tar.gz"
+        state: absent
+      loop:
+        - "kubectx"
+        - "kubens"
+      tags:
+        - "install"
+        - "kubernetes"
+      when: kubectx_kubens_install.changed
+
     - name: "enable and start services"
       ansible.builtin.systemd:
         name: "docker"
@@ -130,6 +169,18 @@
         path: "/home/{{ lookup('env', 'USER') }}/omf-install"
       register: omf_installed
       tags: 
+        - "fish"
+        - "shell"
+
+    - name: "copy fish completions"
+      ansible.builtin.copy:
+        dest: "/home/{{ lookup('env', 'USER') }}/.config/completions/{{ item }}"
+        owner: "{{ lookup('env', 'USER') }}"
+        group: "{{ lookup('env', 'USER') }}"
+        mode: 0644
+        src: "files/{{ item }}"
+      loop: "{{ lookup('fileglob', '*.fish', wantlist=True) }}"
+      tags:
         - "fish"
         - "shell"
 

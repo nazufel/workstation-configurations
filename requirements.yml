@@ -1,5 +1,7 @@
 # requirements.yml
 
+# Copyright 2021 Ryan Ross (nazufel)
+
 # file to define required roles and collections
 
 # install collections with the following command: ansible-galaxy collection install -r requirements.yml

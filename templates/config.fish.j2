@@ -10,6 +10,15 @@ function fish_greeting
     echo "Abndon all hope ye who enter here."
 end
 
-# aliases
+### aliases ###
+
+# AWS
+
+set -x AWS_ACCESS_KEY_ID "{{ aws_access_key }}"
+set -x AWS_SECRET_ACCESS_KEY "aws_access_secret }}"
+set -x AWS_DEFAULT_REGION "{{ aws_default_region }}"
+
+# kubernetes
 
 alias k='kubectl'
+

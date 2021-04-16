@@ -1,3 +1,10 @@
+# install.yml
+
+# playbook to configure a workstation from scratch
+
+# Copyright 2021 Ryan Ross (nazufel)
+
+---
 - name: install
   hosts: localhost
 
@@ -5,7 +12,8 @@
 
     - name: "include vars files"
       ansible.builtin.include_vars:
-        file: vars.yml
+        dir: "vars"
+        extensions: [yml]
       tags: "always"
 
     - name: "add yum repos"
@@ -21,6 +29,20 @@
       become: true
       tags: "dnf"
 
+    # the exlude exists so that the cronjob that runs dnf update hourly doens't
+    # overwrite any hard-coded package versions. However, dnf install will fail
+    # becuase there is an exclusion of required packages. Thus, the exclusion is 
+    # removed before running dnf install, then placed again so the cronjob
+    # doesn't upgrade the specific versions. Not elegant, but works.
+    - name: "remove dnf to exlude for certin packages"
+      ansible.builtin.lineinfile:
+        path: "/etc/dnf/dnf.conf"
+        regexp: '^exclude='
+        state: "absent"
+      become: true
+      tags:
+        - "dnf"
+
     - name: "install dnf packages"
       ansible.builtin.dnf:
         name: "{{ dnf_install_list }}"
@@ -29,6 +51,16 @@
       tags:
         - "dnf"
         - "install"
+
+    - name: "set dnf to exlude for certin packages"
+      ansible.builtin.lineinfile:
+        line: 'exclude={{ dnf_update_exclude_packages }}'
+        path: "/etc/dnf/dnf.conf"
+        regexp: '^exclude'
+        state: "present"
+      become: true
+      tags:
+        - "dnf"
 
     - name: "add flathub remote"
       community.general.flatpak_remote:
@@ -134,6 +166,20 @@
             - omf
 
       when: not omf_installed.stat.exists
+
+    - name: "create dnf update cronjob"
+      ansible.builtin.cron:
+        name: "dnf update"
+        weekday: "*"
+        minute: "0"
+        hour: "*"
+        user: root
+        job: "dnf update -y"
+        cron_file: ansible_dnf_update
+      become: true      
+      tags:
+        - "cron"
+
 
 ...
 #EOF

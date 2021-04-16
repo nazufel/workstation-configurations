@@ -92,6 +92,14 @@
         - "install"
         - "pip"
 
+    - name: "check for kubectx"
+      ansible.builtin.stat:
+        path: "/usr/local/bin/kubectx"
+      register: "kubectx_installed"
+      tags:
+        - "install"
+        - "kubernetes"
+
     - name: "get kubectx and kubens release v{{ kubectx_kubens_release }} binaries"
       ansible.builtin.get_url:
         url: "https://github.com/ahmetb/kubectx/releases/download/v{{ kubectx_kubens_release }}/{{ item }}_v{{ kubectx_kubens_release }}_linux_x86_64.tar.gz"
@@ -103,6 +111,7 @@
         - "install"
         - "kubernetes"
       register: kubectx_kubens_install
+      when: not kubectx_installed.stat.exists
 
     - name: "unarchive kubectx and kubens"
       ansible.builtin.unarchive:
@@ -117,7 +126,7 @@
         - "kubens"
       tags:
         - "kubernetes"
-      when: kubectx_kubens_install.changed
+      when: kubectx_kubens_install is defined and kubectx_kubens_install.changed
 
     - name: "clean up kubectx and kubens tarballs from Downloads"
       ansible.builtin.file:
@@ -130,6 +139,18 @@
         - "install"
         - "kubernetes"
       when: kubectx_kubens_install.changed
+
+    - name: "install kind"
+      ansible.builtin.get_url:
+        dest: "/usr/local/bin/kind"
+        group: "root"
+        mode: 0777
+        owner: "root"
+        url: "https://kind.sigs.k8s.io/dl/v0.10.0/kind-linux-amd64"
+      become: true
+      tags:
+        - "install"
+        - "kubernetes"
 
     - name: "enable and start services"
       ansible.builtin.systemd:

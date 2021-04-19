@@ -16,9 +16,9 @@ dnf_install_list:
   - "google-chrome"
   - "google-cloud-sdk"
   - "kubectl"
-  - "terraform-0.14.6"
+  - "terraform-0.15.0"
 
-dnf_update_exclude_packages: "terraform-0.14.6"
+dnf_update_exclude_packages: "terraform-0.15.0"
 
 flatpak_packages:
   - "com.slack.Slack"

@@ -35,7 +35,7 @@
     # becuase there is an exclusion of required packages. Thus, the exclusion is 
     # removed before running dnf install, then placed again so the cronjob
     # doesn't upgrade the specific versions. Not elegant, but works.
-    - name: "remove dnf to exlude for certin packages"
+    - name: "remove dnf to exlude for certain packages"
       ansible.builtin.lineinfile:
         path: "/etc/dnf/dnf.conf"
         regexp: '^exclude='
@@ -53,7 +53,7 @@
         - "dnf"
         - "install"
 
-    - name: "set dnf to exlude for certin packages"
+    - name: "set dnf to exlude for certain packages"
       ansible.builtin.lineinfile:
         line: 'exclude={{ dnf_update_exclude_packages }}'
         path: "/etc/dnf/dnf.conf"

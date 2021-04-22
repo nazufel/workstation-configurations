@@ -152,6 +152,51 @@
         - "install"
         - "kubernetes"
 
+    - name: "check for helm"
+      ansible.builtin.stat:
+        path: "/usr/local/bin/helm"
+      register: "helm_installed"
+      tags:
+        - "helm"
+        - "install"
+        - "kubernetes"
+
+    - name: "download helm tarball"
+      ansible.builtin.get_url:
+        url: "https://get.helm.sh/helm-v3.5.4-linux-amd64.tar.gz"
+        dest: "/home/{{ lookup('env', 'USER') }}/Downloads/helm-v3.5.4-linux-amd64.tar.gz"
+      tags:
+        - "install"
+        - "kubernetes"
+        - "helm"
+      register: helm_install
+      when: not helm_installed.stat.exists
+
+    - name: "unarchive and install helm"
+      ansible.builtin.unarchive:
+        dest: "/usr/local/bin"
+        extra_opts: [--strip-components=1]
+        group: "root"
+        mode: 0777
+        owner: "root"
+        src: "/home/{{ lookup('env', 'USER') }}/Downloads/helm-v3.5.4-linux-amd64.tar.gz"
+      become: true
+      tags:
+        - "helm"
+        - "install"
+        - "kubernetes"
+      when: helm_install is defined and helm_install.changed
+
+    - name: "clean up helm tarball from Downloads"
+      ansible.builtin.file:
+        path: "/home/{{ lookup('env', 'USER') }}/Downloads/helm-v3.5.4-linux-amd64.tar.gz"
+        state: absent
+      tags:
+        - "helm"
+        - "install"
+        - "kubernetes"
+      when: helm_install.changed
+
     - name: "enable and start services"
       ansible.builtin.systemd:
         name: "docker"

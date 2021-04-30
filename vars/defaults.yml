@@ -27,6 +27,8 @@ kubectx_kubens_release: 0.9.3
 
 pip_packages: 
   - "ansible==2.9.13"
+  - "thefuck==3.30"
+
 
 # TODO: variablize OS and Arch specifics
 yum_repo_list:

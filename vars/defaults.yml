@@ -16,6 +16,7 @@ dnf_install_list:
   - "google-chrome"
   - "google-cloud-sdk"
   - "kubectl"
+  - "nmap"
   - "terraform-0.14.10"
 
 dnf_update_exclude_packages: "terraform-0.14.10"

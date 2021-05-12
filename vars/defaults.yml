@@ -28,6 +28,7 @@ kubectx_kubens_release: 0.9.3
 
 pip_packages: 
   - "ansible==2.9.13"
+  - "docker-compose==1.29.2"
   - "thefuck==3.30"
 
 

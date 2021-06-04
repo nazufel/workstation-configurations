@@ -140,13 +140,21 @@
         - "kubernetes"
       when: kubectx_kubens_install.changed
 
+    - name: "remove previous kind"
+      ansible.builtin.file:
+        path: "/usr/local/bin/kind"
+        state: "absent"
+      tags:
+        - "install"
+        - "kubernetes"
+
     - name: "install kind"
       ansible.builtin.get_url:
         dest: "/usr/local/bin/kind"
         group: "root"
         mode: 0777
         owner: "root"
-        url: "https://kind.sigs.k8s.io/dl/v0.10.0/kind-linux-amd64"
+        url: "https://kind.sigs.k8s.io/dl/v0.11.0/kind-linux-amd64"
       become: true
       tags:
         - "install"

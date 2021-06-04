@@ -7,6 +7,7 @@
 ---
 - name: install
   hosts: localhost
+  become: true
 
   tasks:
 
@@ -29,6 +30,17 @@
       loop: "{{ yum_repo_list }}"
       become: true
       tags: "dnf"
+
+    - name: "install telepresence binary"
+      ansible.builtin.get_url:
+        dest: "/usr/local/bin/telepresence"
+        owner: "root"
+        group: "root"
+        mode: "0777"
+        url: "https://app.getambassador.io/download/tel2/linux/amd64/latest/telepresence"
+      tags:
+        - "dnf"
+        - "install"
 
     # the exlude exists so that the cronjob that runs dnf update hourly doens't
     # overwrite any hard-coded package versions. However, dnf install will fail

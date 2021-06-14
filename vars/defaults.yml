@@ -15,6 +15,7 @@ dnf_install_list:
   - "docker-ce-cli"
   - "dnf-plugins-core"
   - "fish"
+  - "gcc-c++"
   - "google-chrome"
   - "google-cloud-sdk"
   - "kubectl"

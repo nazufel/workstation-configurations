@@ -7,17 +7,18 @@
 ---
 
 dnf_install_list:
+  - "bazel3"
   - "brave-browser"
   - "code"
   - "containerd.io"
   - "docker-ce" 
   - "docker-ce-cli"
+  - "dnf-plugins-core"
   - "fish"
   - "google-chrome"
   - "google-cloud-sdk"
   - "kubectl"
   - "nmap"
-  - "telepresence"
   - "terraform-0.14.10"
 
 dnf_update_exclude_packages: "terraform-0.14.10"

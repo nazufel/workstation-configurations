@@ -18,6 +18,14 @@
           - "yml"
       tags: "always"
 
+    - name: "enable bazel repository with copr"
+      community.general.copr:
+        name: 'vbatts/bazel'
+        state: "enabled"
+      tags:
+        - "dnf"
+        - "install"
+
     - name: "add yum repos"
       ansible.builtin.yum_repository:
         name: "{{ item.yum_repo_name }}"
@@ -41,6 +49,7 @@
       tags:
         - "dnf"
         - "install"
+
 
     # the exlude exists so that the cronjob that runs dnf update hourly doens't
     # overwrite any hard-coded package versions. However, dnf install will fail

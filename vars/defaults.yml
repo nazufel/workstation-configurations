@@ -9,20 +9,26 @@
 dnf_install_list:
   - "bazel3"
   - "brave-browser"
+  - "cmake"
   - "code"
   - "containerd.io"
   - "docker-ce" 
   - "docker-ce-cli"
   - "dnf-plugins-core"
   - "fish"
+  - "fontconfig-devel"
+  - "freetype-devel"
+  - "g++"
   - "gcc-c++"
   - "google-chrome"
   - "google-cloud-sdk"
   - "kubectl"
+  - "libxcb-devel"
+  - "libxkbcommon-devel"
   - "nmap"
-  - "terraform-0.14.10"
+  - "terraform-1.0.1"
 
-dnf_update_exclude_packages: "terraform-0.14.10"
+dnf_update_exclude_packages: "terraform-1.0.1"
 
 flatpak_packages:
   - "com.slack.Slack"

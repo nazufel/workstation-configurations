@@ -7,7 +7,6 @@
 ---
 - name: install
   hosts: localhost
-  become: true
 
   tasks:
 
@@ -18,94 +17,244 @@
           - "yml"
       tags: "always"
 
-    - name: "enable bazel repository with copr"
-      community.general.copr:
-        name: 'vbatts/bazel'
-        state: "enabled"
-      tags:
-        - "dnf"
-        - "install"
+    - name: "permission escalation block"
+      block:
 
-    - name: "add yum repos"
-      ansible.builtin.yum_repository:
-        name: "{{ item.yum_repo_name }}"
-        baseurl: "{{ item.yum_repo_baseurl }}"
-        description: "{{ item.yum_repo_description }}"
-        enabled: "{{ item.yum_repo_enabled }}"
-        file: "{{ item.yum_repo_file }}"
-        gpgcheck: "{{ item.yum_repo_gpgcheck }}"
-        gpgkey: "{{ item.yum_repo_gpgkey }}"
-      loop: "{{ yum_repo_list }}"
+      #####################################
+      ### DNF REPOSITORIES AND INSTALLS ###
+      #####################################
+
+      - name: "enable bazel repository with copr"
+        community.general.copr:
+          name: 'vbatts/bazel'
+          state: "enabled"
+        tags:
+          - "dnf"
+          - "install"
+
+      - name: "add yum repos"
+        ansible.builtin.yum_repository:
+          name: "{{ item.yum_repo_name }}"
+          baseurl: "{{ item.yum_repo_baseurl }}"
+          description: "{{ item.yum_repo_description }}"
+          enabled: "{{ item.yum_repo_enabled }}"
+          file: "{{ item.yum_repo_file }}"
+          gpgcheck: "{{ item.yum_repo_gpgcheck }}"
+          gpgkey: "{{ item.yum_repo_gpgkey }}"
+        loop: "{{ yum_repo_list }}"
+        tags: "dnf"
+
+      - name: "install telepresence binary"
+        ansible.builtin.get_url:
+          dest: "/usr/local/bin/telepresence"
+          owner: "root"
+          group: "root"
+          mode: "0777"
+          url: "https://app.getambassador.io/download/tel2/linux/amd64/latest/telepresence"
+        tags:
+          - "dnf"
+          - "install"
+
+
+      # the exlude exists so that the cronjob that runs dnf update hourly doens't
+      # overwrite any hard-coded package versions. However, dnf install will fail
+      # becuase there is an exclusion of required packages. Thus, the exclusion is 
+      # removed before running dnf install, then placed again so the cronjob
+      # doesn't upgrade the specific versions. Not elegant, but works.
+      - name: "remove dnf to exlude for certain packages"
+        ansible.builtin.lineinfile:
+          path: "/etc/dnf/dnf.conf"
+          regexp: '^exclude='
+          state: "absent"
+        tags:
+          - "dnf"
+
+      - name: "install dnf packages"
+        ansible.builtin.dnf:
+          name: "{{ dnf_install_list }}"
+          state: "latest"
+        tags:
+          - "dnf"
+          - "install"
+
+      - name: "set dnf to exlude for certain packages"
+        ansible.builtin.lineinfile:
+          line: 'exclude={{ dnf_update_exclude_packages }}'
+          path: "/etc/dnf/dnf.conf"
+          regexp: '^exclude'
+          state: "present"
+        tags:
+          - "dnf"
+
+      - name: "add flathub remote"
+        community.general.flatpak_remote:
+          name: "flathub"
+          state: "present"
+          flatpakrepo_url: "https://dl.flathub.org/repo/flathub.flatpakrepo"
+        tags:
+          - "flatpak"
+          - "install"
+
+      - name: "install flatpak packages"
+        community.general.flatpak:
+          name: "{{ item }}"
+          state: "present"
+          remote: "flathub"
+        loop: "{{ flatpak_packages }}"
+        tags:
+          - "flatpak"
+          - "install"
+
+      #################################
+      ### INSTALL BINARIES ON $PATH ###
+      #################################
+
+      - name: "check for kubectx"
+        ansible.builtin.stat:
+          path: "/usr/local/bin/kubectx"
+        register: "kubectx_installed"
+        tags:
+          - "install"
+          - "kubernetes"
+
+      - name: "get kubectx and kubens release v{{ kubectx_kubens_release }} binaries"
+        ansible.builtin.get_url:
+          url: "https://github.com/ahmetb/kubectx/releases/download/v{{ kubectx_kubens_release }}/{{ item }}_v{{ kubectx_kubens_release }}_linux_x86_64.tar.gz"
+          dest: "/home/{{ lookup('env', 'USER') }}/Downloads/{{ item }}.tar.gz"
+        loop:
+          - "kubectx"
+          - "kubens"
+        tags:
+          - "install"
+          - "kubernetes"
+        register: kubectx_kubens_install
+        when: not kubectx_installed.stat.exists
+
+      - name: "unarchive kubectx and kubens"
+        ansible.builtin.unarchive:
+          dest: "/usr/local/bin"
+          owner: "root"
+          group: "root"
+          mode: 0777
+          src: "/home/{{ lookup('env', 'USER') }}/Downloads/{{ item }}.tar.gz"
+        loop:
+          - "kubectx"
+          - "kubens"
+        tags:
+          - "kubernetes"
+        when: kubectx_kubens_install is defined and kubectx_kubens_install.changed
+
+      - name: "clean up kubectx and kubens tarballs from Downloads"
+        ansible.builtin.file:
+          path: "/home/{{ lookup('env', 'USER') }}/Downloads/{{ item }}.tar.gz"
+          state: absent
+        loop:
+          - "kubectx"
+          - "kubens"
+        tags:
+          - "install"
+          - "kubernetes"
+        when: kubectx_kubens_install.changed
+
+      - name: "remove previous kind"
+        ansible.builtin.file:
+          path: "/usr/local/bin/kind"
+          state: "absent"
+        tags:
+          - "install"
+          - "kubernetes"
+
+      - name: "install kind"
+        ansible.builtin.get_url:
+          dest: "/usr/local/bin/kind"
+          group: "root"
+          mode: 0777
+          owner: "root"
+          url: "https://kind.sigs.k8s.io/dl/v0.11.0/kind-linux-amd64"
+        tags:
+          - "install"
+          - "kubernetes"
+
+      - name: "check for helm"
+        ansible.builtin.stat:
+          path: "/usr/local/bin/helm"
+        register: "helm_installed"
+        tags:
+          - "helm"
+          - "install"
+          - "kubernetes"
+
+      - name: "download helm tarball"
+        ansible.builtin.get_url:
+          url: "https://get.helm.sh/helm-v3.5.4-linux-amd64.tar.gz"
+          dest: "/home/{{ lookup('env', 'USER') }}/Downloads/helm-v3.5.4-linux-amd64.tar.gz"
+        tags:
+          - "install"
+          - "kubernetes"
+          - "helm"
+        register: helm_install
+        when: not helm_installed.stat.exists
+
+      - name: "unarchive and install helm"
+        ansible.builtin.unarchive:
+          dest: "/usr/local/bin"
+          extra_opts: [--strip-components=1]
+          group: "root"
+          mode: 0777
+          owner: "root"
+          src: "/home/{{ lookup('env', 'USER') }}/Downloads/helm-v3.5.4-linux-amd64.tar.gz"
+        tags:
+          - "helm"
+          - "install"
+          - "kubernetes"
+        when: helm_install is defined and helm_install.changed
+
+      - name: "clean up helm tarball from Downloads"
+        ansible.builtin.file:
+          path: "/home/{{ lookup('env', 'USER') }}/Downloads/helm-v3.5.4-linux-amd64.tar.gz"
+          state: absent
+        tags:
+          - "helm"
+          - "install"
+          - "kubernetes"
+        when: helm_install.changed
+
+      ######################
+      ### START SERVICES ###
+      ######################
+
+      - name: "enable and start services"
+        ansible.builtin.systemd:
+          name: "docker"
+          state: started
+          enabled: true
+
+      #################
+      ### CRON Jobs ###
+      #################
+
+      - name: "create dnf update cronjob"
+        ansible.builtin.cron:
+          name: "dnf update"
+          weekday: "*"
+          minute: "0"
+          hour: "*"
+          user: root
+          job: "dnf update -y"
+          cron_file: ansible_dnf_update
+        tags:
+          - "cron"
+
+      # end escalation block
       become: true
-      tags: "dnf"
 
-    - name: "install telepresence binary"
-      ansible.builtin.get_url:
-        dest: "/usr/local/bin/telepresence"
-        owner: "root"
-        group: "root"
-        mode: "0777"
-        url: "https://app.getambassador.io/download/tel2/linux/amd64/latest/telepresence"
-      tags:
-        - "dnf"
-        - "install"
-
-
-    # the exlude exists so that the cronjob that runs dnf update hourly doens't
-    # overwrite any hard-coded package versions. However, dnf install will fail
-    # becuase there is an exclusion of required packages. Thus, the exclusion is 
-    # removed before running dnf install, then placed again so the cronjob
-    # doesn't upgrade the specific versions. Not elegant, but works.
-    - name: "remove dnf to exlude for certain packages"
-      ansible.builtin.lineinfile:
-        path: "/etc/dnf/dnf.conf"
-        regexp: '^exclude='
-        state: "absent"
-      become: true
-      tags:
-        - "dnf"
-
-    - name: "install dnf packages"
-      ansible.builtin.dnf:
-        name: "{{ dnf_install_list }}"
-        state: "latest"
-      become: true
-      tags:
-        - "dnf"
-        - "install"
-
-    - name: "set dnf to exlude for certain packages"
-      ansible.builtin.lineinfile:
-        line: 'exclude={{ dnf_update_exclude_packages }}'
-        path: "/etc/dnf/dnf.conf"
-        regexp: '^exclude'
-        state: "present"
-      become: true
-      tags:
-        - "dnf"
-
-    - name: "add flathub remote"
-      community.general.flatpak_remote:
-        name: "flathub"
-        state: "present"
-        flatpakrepo_url: "https://dl.flathub.org/repo/flathub.flatpakrepo"
-      become: true
-      tags:
-        - "flatpak"
-        - "install"
-
-    - name: "install flatpak packages"
-      community.general.flatpak:
-        name: "{{ item }}"
-        state: "present"
-        remote: "flathub"
-      loop: "{{ flatpak_packages }}"
-      tags:
-        - "flatpak"
-        - "install"
+    ############################
+    ### INSTALL PIP PACKAGES ###
+    ############################
 
     - name: "install pip packages"
       ansible.builtin.pip:
+        extra_args: "--user"
         name: "{{ item }}"
         state: "forcereinstall"
       loop: "{{ pip_packages }}"
@@ -113,128 +262,8 @@
         - "install"
         - "pip"
 
-    - name: "check for kubectx"
-      ansible.builtin.stat:
-        path: "/usr/local/bin/kubectx"
-      register: "kubectx_installed"
-      tags:
-        - "install"
-        - "kubernetes"
-
-    - name: "get kubectx and kubens release v{{ kubectx_kubens_release }} binaries"
-      ansible.builtin.get_url:
-        url: "https://github.com/ahmetb/kubectx/releases/download/v{{ kubectx_kubens_release }}/{{ item }}_v{{ kubectx_kubens_release }}_linux_x86_64.tar.gz"
-        dest: "/home/{{ lookup('env', 'USER') }}/Downloads/{{ item }}.tar.gz"
-      loop:
-        - "kubectx"
-        - "kubens"
-      tags:
-        - "install"
-        - "kubernetes"
-      register: kubectx_kubens_install
-      when: not kubectx_installed.stat.exists
-
-    - name: "unarchive kubectx and kubens"
-      ansible.builtin.unarchive:
-        dest: "/usr/local/bin"
-        owner: "root"
-        group: "root"
-        mode: 0777
-        src: "/home/{{ lookup('env', 'USER') }}/Downloads/{{ item }}.tar.gz"
-      become: true
-      loop:
-        - "kubectx"
-        - "kubens"
-      tags:
-        - "kubernetes"
-      when: kubectx_kubens_install is defined and kubectx_kubens_install.changed
-
-    - name: "clean up kubectx and kubens tarballs from Downloads"
-      ansible.builtin.file:
-        path: "/home/{{ lookup('env', 'USER') }}/Downloads/{{ item }}.tar.gz"
-        state: absent
-      loop:
-        - "kubectx"
-        - "kubens"
-      tags:
-        - "install"
-        - "kubernetes"
-      when: kubectx_kubens_install.changed
-
-    - name: "remove previous kind"
-      ansible.builtin.file:
-        path: "/usr/local/bin/kind"
-        state: "absent"
-      tags:
-        - "install"
-        - "kubernetes"
-
-    - name: "install kind"
-      ansible.builtin.get_url:
-        dest: "/usr/local/bin/kind"
-        group: "root"
-        mode: 0777
-        owner: "root"
-        url: "https://kind.sigs.k8s.io/dl/v0.11.0/kind-linux-amd64"
-      become: true
-      tags:
-        - "install"
-        - "kubernetes"
-
-    - name: "check for helm"
-      ansible.builtin.stat:
-        path: "/usr/local/bin/helm"
-      register: "helm_installed"
-      tags:
-        - "helm"
-        - "install"
-        - "kubernetes"
-
-    - name: "download helm tarball"
-      ansible.builtin.get_url:
-        url: "https://get.helm.sh/helm-v3.5.4-linux-amd64.tar.gz"
-        dest: "/home/{{ lookup('env', 'USER') }}/Downloads/helm-v3.5.4-linux-amd64.tar.gz"
-      tags:
-        - "install"
-        - "kubernetes"
-        - "helm"
-      register: helm_install
-      when: not helm_installed.stat.exists
-
-    - name: "unarchive and install helm"
-      ansible.builtin.unarchive:
-        dest: "/usr/local/bin"
-        extra_opts: [--strip-components=1]
-        group: "root"
-        mode: 0777
-        owner: "root"
-        src: "/home/{{ lookup('env', 'USER') }}/Downloads/helm-v3.5.4-linux-amd64.tar.gz"
-      become: true
-      tags:
-        - "helm"
-        - "install"
-        - "kubernetes"
-      when: helm_install is defined and helm_install.changed
-
-    - name: "clean up helm tarball from Downloads"
-      ansible.builtin.file:
-        path: "/home/{{ lookup('env', 'USER') }}/Downloads/helm-v3.5.4-linux-amd64.tar.gz"
-        state: absent
-      tags:
-        - "helm"
-        - "install"
-        - "kubernetes"
-      when: helm_install.changed
-
-    - name: "enable and start services"
-      ansible.builtin.systemd:
-        name: "docker"
-        state: started
-        enabled: true
-      become: true
-
     ##################################
-    ### create and configure users ###
+    ### CREATE AND CONFIGURE USERS ###
     ##################################
     - name: "configure users"
       ansible.builtin.user:
@@ -329,20 +358,5 @@
             - omf
 
       when: not omf_installed.stat.exists
-
-    - name: "create dnf update cronjob"
-      ansible.builtin.cron:
-        name: "dnf update"
-        weekday: "*"
-        minute: "0"
-        hour: "*"
-        user: root
-        job: "dnf update -y"
-        cron_file: ansible_dnf_update
-      become: true      
-      tags:
-        - "cron"
-
-
 ...
 #EOF

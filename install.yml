@@ -250,11 +250,14 @@
 
     - name: "template shell configs"
       ansible.builtin.template:
-        src: "config.fish.j2"
-        dest: "/home/{{ lookup('env', 'USER') }}/.config/fish/config.fish"
+        src: "{{ item }}.j2"
+        dest: "/home/{{ lookup('env', 'USER') }}/{{ fish_shell_config_dir }}/{{ item }}.fish"
         owner: "{{ lookup('env', 'USER') }}"
         group: "{{ lookup('env', 'USER') }}"
         mode: 0644
+      loop:
+        - "config"
+        - "work_envs"
       tags:
         - "shell"
         - "fish"
@@ -272,7 +275,7 @@
         group: "{{ lookup('env', 'USER') }}"
         mode: 0770
         owner: "{{ lookup('env', 'USER') }}"
-        path: "/home/{{ lookup('env', 'USER') }}/.config/fish/completions"
+        path: "/home/{{ lookup('env', 'USER') }}/{{ fish_shell_config_dir }}/completions"
         state: "directory"
       tags:
         - "fish"
@@ -280,7 +283,7 @@
 
     - name: "copy fish completions"
       ansible.builtin.copy:
-        dest: "/home/{{ lookup('env', 'USER') }}/.config/fish/completions/{{ item }}.fish"
+        dest: "/home/{{ lookup('env', 'USER') }}/{{ fish_shell_config_dir }}/{{ item }}.fish"
         owner: "{{ lookup('env', 'USER') }}"
         group: "{{ lookup('env', 'USER') }}"
         mode: 0644

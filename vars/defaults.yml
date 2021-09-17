@@ -30,6 +30,9 @@ dnf_install_list:
 
 dnf_update_exclude_packages: "terraform-1.0.1"
 
+# fish shell has a config directory that loads all .fish files contained - http://fishshell.com/docs/current/index.html#configuration-files
+fish_shell_config_dir: ".config/fish/conf.d"
+
 flatpak_packages:
   - "com.slack.Slack"
 

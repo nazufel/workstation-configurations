@@ -43,12 +43,6 @@ end
 
 ### environment variables ###
 
-# AWS
-
-set -x AWS_ACCESS_KEY_ID "{{ aws_access_key }}"
-set -x AWS_SECRET_ACCESS_KEY "{{ aws_access_secret }}"
-set -x AWS_DEFAULT_REGION "{{ aws_default_region }}"
-
 # kubectl
 
 set -x KUBE_EDITOR /usr/bin/vi

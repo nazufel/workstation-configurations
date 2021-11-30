@@ -1,0 +1,13 @@
+# install_fish.yaml
+
+# playbook to install and configure fish shell
+
+---
+- name: "install and configure fish shell"
+  hosts: "localhost"
+  gather_facts: true
+
+  roles:
+    - name: "install_config_fish"
+...
+#EOF

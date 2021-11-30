@@ -2,7 +2,7 @@
 
 # ansible_managed 
 
-# set the PATH
+# add to the PATH
 set -x PATH $PATH ~/.local/bin
 
 # set the prompt greeting
@@ -18,16 +18,13 @@ end
 set -x PATH $PATH /usr/local/go/bin
 
 # add gopath to path
-set -x PATH $PATH /home/rross/go/bin
+set -x PATH $PATH /home/ryan/go/bin
 
 # kubernetes
 
 alias k='kubectl'
-alias kc='kubectx'
-alias kn='kubens'
-
-# telepresence 
-alias t='telepresence'
+alias kc='kubectl ctx'
+alias kn='kubectl ns'
 
 # thefuck
 

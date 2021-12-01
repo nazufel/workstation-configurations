@@ -30,6 +30,9 @@ dnf_install_list:
   - "postgresql"
   - "terraform-1.0.1"
 
+apt_install_list:
+  - "fzf"
+
 dnf_update_exclude_packages: "terraform-1.0.1"
 
 # fish shell has a config directory that loads all .fish files contained - http://fishshell.com/docs/current/index.html#configuration-files

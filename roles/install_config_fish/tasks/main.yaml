@@ -3,7 +3,7 @@
 # tasks to install or config fish shell
 ---
 
-# TODO: wrap the install part in a conditioanal if ansible_facts.ansible_env.shell != "/bin/fish"
+# TODO: wrap the install part in a conditioanal if ansible_facts.ansible_env.shell != "/bin/fish" - https://docs.ansible.com/ansible/latest/user_guide/playbooks_vars_facts.html
 - name: "add fish apt repo"
   ansible.builtin.command: "apt-add-repository ppa:fish-shell/release-3"
   become: true
